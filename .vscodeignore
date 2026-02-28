@@ -1,6 +1,7 @@
 .vscode/**
 src/**
 node_modules/**
+resources/**
 .gitignore
 tsconfig.json
 **/*.ts
@@ -9,3 +10,4 @@ tsconfig.json
 **/*.d.ts.map
 .eslintrc*
 .github/**
+*.vsix

@@ -1,12 +1,16 @@
-# Airlancer for Cursor
+# Airlancer for Cursor & Antigravity
 
 <p align="center">
   <img src="media/icon.png" width="120" alt="Airlancer" />
 </p>
 
 <p align="center">
-  <strong>Connect Cursor to the Airlancer AI governance platform.</strong><br/>
+  <strong>Connect your AI IDE to the Airlancer governance platform.</strong><br/>
   MCP tools · Skills sync · Policy rules · Cost tracking · Data rooms
+</p>
+
+<p align="center">
+  Works with <strong>Cursor</strong> · <strong>Google Antigravity</strong> · <strong>VS Code</strong>
 </p>
 
 ---
@@ -92,9 +96,32 @@ The status bar shows your connection state. All 15 MCP tools are now available t
 - **Scope restrictions** — API keys can be limited to specific tool categories
 - **Audit trail** — every tool call is logged for compliance
 
+## Antigravity / Native MCP Setup
+
+If you're using **Google Antigravity** or any MCP-compatible IDE, you can connect directly without this extension:
+
+Add to your MCP config (`~/.gemini/antigravity/mcp_config.json` for Antigravity, `.cursor/mcp.json` for Cursor):
+
+```json
+{
+  "mcpServers": {
+    "airlancer": {
+      "serverUrl": "https://mcp-dev.airlancer.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+Get your API key from the [Airlancer Dashboard](https://adlc-dev.airlancer.ai) → Settings → API Keys.
+
+> **Note**: The extension adds auto-connect, skills/rules sync, sidebar views, and a setup wizard on top of the raw MCP connection.
+
 ## Requirements
 
-- **Cursor** 0.44+ (or VS Code 1.85+)
+- **Cursor** 0.44+ / **Google Antigravity** / **VS Code** 1.85+
 - An **Airlancer** account with API access
 
 ## Links
