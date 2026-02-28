@@ -20,6 +20,7 @@ export class StatusBarManager {
   setConnected(toolCount: number): void {
     this.item.text = `$(rocket) Airlancer (${toolCount} tools)`;
     this.item.tooltip = `Connected to Airlancer — ${toolCount} MCP tools available`;
+    this.item.command = 'airlancer.showStatus';
     this.item.backgroundColor = undefined;
   }
 

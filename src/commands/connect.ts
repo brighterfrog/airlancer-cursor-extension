@@ -47,8 +47,9 @@ export async function connectCommand(ctx: AirlancerContext, toolsProvider: Tools
     vscode.commands.executeCommand('setContext', 'airlancer.connected', true);
     ctx.statusBar.setConnected(tools.length);
 
-    // Update tools tree.
+    // Update sidebar tree views.
     toolsProvider.setTools(tools);
+    ctx.statusTree.setConnected(serverUrl, status.serverVersion, tools.length);
 
     // Auto-sync skills and rules.
     if (config.get<boolean>('syncSkillsOnConnect', true)) {
@@ -65,6 +66,7 @@ export async function connectCommand(ctx: AirlancerContext, toolsProvider: Tools
     const msg = err instanceof Error ? err.message : String(err);
     ctx.outputChannel.appendLine(`Connection failed: ${msg}`);
     ctx.statusBar.setError(msg);
+    ctx.statusTree.setDisconnected();
     ctx.connected = false;
     vscode.commands.executeCommand('setContext', 'airlancer.connected', false);
     vscode.window.showErrorMessage(`Failed to connect to Airlancer: ${msg}`);
@@ -76,6 +78,7 @@ export async function disconnectCommand(ctx: AirlancerContext): Promise<void> {
   ctx.connected = false;
   vscode.commands.executeCommand('setContext', 'airlancer.connected', false);
   ctx.statusBar.setDisconnected();
+  ctx.statusTree.setDisconnected();
   ctx.outputChannel.appendLine('Disconnected from Airlancer.');
   vscode.window.showInformationMessage('Disconnected from Airlancer.');
 }

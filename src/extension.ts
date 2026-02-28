@@ -14,6 +14,7 @@ import { McpRegistrar } from './utils/mcp';
 import { ToolsTreeProvider } from './views/tools';
 import { SkillsTreeProvider } from './views/skillsTree';
 import { RulesTreeProvider } from './views/rulesTree';
+import { StatusTreeProvider } from './views/statusTree';
 
 // ---------------------------------------------------------------------------
 // Global Extension State
@@ -23,6 +24,7 @@ export interface AirlancerContext {
   client: AirlancerClient;
   secrets: SecretStorage;
   statusBar: StatusBarManager;
+  statusTree: StatusTreeProvider;
   mcpRegistrar: McpRegistrar;
   skillsSync: SkillsSync;
   rulesSync: RulesSync;
@@ -51,11 +53,13 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
   const mcpRegistrar = new McpRegistrar(outputChannel);
   const skillsSync = new SkillsSync(client, outputChannel);
   const rulesSync = new RulesSync(client, outputChannel);
+  const statusTree = new StatusTreeProvider();
 
   ctx = {
     client,
     secrets,
     statusBar,
+    statusTree,
     mcpRegistrar,
     skillsSync,
     rulesSync,
@@ -67,6 +71,7 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
   const toolsProvider = new ToolsTreeProvider();
   const skillsProvider = new SkillsTreeProvider();
   const rulesProvider = new RulesTreeProvider();
+  vscode.window.registerTreeDataProvider('airlancer.status', statusTree);
   vscode.window.registerTreeDataProvider('airlancer.tools', toolsProvider);
   vscode.window.registerTreeDataProvider('airlancer.skills', skillsProvider);
   vscode.window.registerTreeDataProvider('airlancer.rules', rulesProvider);

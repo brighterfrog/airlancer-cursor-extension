@@ -2,7 +2,7 @@
   "name": "airlancer",
   "displayName": "Airlancer — AI Platform for Cursor",
   "description": "Connect Cursor to the Airlancer governance platform. Auto-configure MCP tools, sync team skills & rules, enforce cost budgets, and get policy-aware AI assistance.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "airlancer",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -146,7 +146,7 @@
         {
           "id": "airlancer",
           "title": "Airlancer",
-          "icon": "media/icon.png"
+          "icon": "media/sidebar-icon.svg"
         }
       ]
     },
@@ -154,8 +154,7 @@
       "airlancer": [
         {
           "id": "airlancer.status",
-          "name": "Connection",
-          "type": "webview"
+          "name": "Connection"
         },
         {
           "id": "airlancer.tools",
