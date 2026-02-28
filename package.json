@@ -1,0 +1,205 @@
+{
+  "name": "airlancer",
+  "displayName": "Airlancer — AI Platform for Cursor",
+  "description": "Connect Cursor to the Airlancer governance platform. Auto-configure MCP tools, sync team skills & rules, enforce cost budgets, and get policy-aware AI assistance.",
+  "version": "0.1.0",
+  "publisher": "airlancer",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "airlancer",
+    "mcp",
+    "cursor",
+    "governance",
+    "ai-platform",
+    "sdlc",
+    "model-context-protocol",
+    "enterprise",
+    "multi-tenant",
+    "code-review",
+    "quality-gates",
+    "data-room"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/airlancer/airlancer-cursor-extension"
+  },
+  "homepage": "https://airlancer.ai",
+  "bugs": {
+    "url": "https://github.com/airlancer/airlancer-cursor-extension/issues"
+  },
+  "galleryBanner": {
+    "color": "#0f172a",
+    "theme": "dark"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "airlancer.connect",
+        "title": "Connect to Airlancer",
+        "category": "Airlancer",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "airlancer.disconnect",
+        "title": "Disconnect from Airlancer",
+        "category": "Airlancer",
+        "icon": "$(debug-disconnect)"
+      },
+      {
+        "command": "airlancer.setup",
+        "title": "Setup Wizard",
+        "category": "Airlancer",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "airlancer.syncSkills",
+        "title": "Sync Skills from Platform",
+        "category": "Airlancer",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "airlancer.syncRules",
+        "title": "Sync Rules from Platform",
+        "category": "Airlancer",
+        "icon": "$(law)"
+      },
+      {
+        "command": "airlancer.showStatus",
+        "title": "Show Connection Status",
+        "category": "Airlancer",
+        "icon": "$(info)"
+      },
+      {
+        "command": "airlancer.openDashboard",
+        "title": "Open Airlancer Dashboard",
+        "category": "Airlancer",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "airlancer.createApiKey",
+        "title": "Create New API Key",
+        "category": "Airlancer",
+        "icon": "$(key)"
+      }
+    ],
+    "configuration": {
+      "title": "Airlancer",
+      "properties": {
+        "airlancer.serverUrl": {
+          "type": "string",
+          "default": "https://mcp-dev.airlancer.ai",
+          "description": "Airlancer MCP server URL",
+          "order": 1
+        },
+        "airlancer.autoConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically connect to Airlancer on startup",
+          "order": 2
+        },
+        "airlancer.syncSkillsOnConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically sync skills when connected",
+          "order": 3
+        },
+        "airlancer.syncRulesOnConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically sync rules when connected",
+          "order": 4
+        },
+        "airlancer.skillsSyncInterval": {
+          "type": "number",
+          "default": 300,
+          "description": "Skills sync interval in seconds (0 to disable)",
+          "order": 5
+        },
+        "airlancer.rulesSyncInterval": {
+          "type": "number",
+          "default": 300,
+          "description": "Rules sync interval in seconds (0 to disable)",
+          "order": 6
+        },
+        "airlancer.dashboardUrl": {
+          "type": "string",
+          "default": "https://adlc-dev.airlancer.ai",
+          "description": "Airlancer dashboard URL for browser links",
+          "order": 7
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "airlancer",
+          "title": "Airlancer",
+          "icon": "media/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "airlancer": [
+        {
+          "id": "airlancer.status",
+          "name": "Connection",
+          "type": "webview"
+        },
+        {
+          "id": "airlancer.tools",
+          "name": "MCP Tools"
+        },
+        {
+          "id": "airlancer.skills",
+          "name": "Skills"
+        },
+        {
+          "id": "airlancer.rules",
+          "name": "Rules"
+        }
+      ]
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "airlancer.connect",
+          "when": "!airlancer.connected"
+        },
+        {
+          "command": "airlancer.disconnect",
+          "when": "airlancer.connected"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "publish:vscode": "vsce publish",
+    "publish:openvsx": "ovsx publish",
+    "publish:all": "npm run publish:vscode && npm run publish:openvsx"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "eslint": "^9.0.0",
+    "ovsx": "^0.9.0",
+    "typescript": "^5.5.0"
+  }
+}

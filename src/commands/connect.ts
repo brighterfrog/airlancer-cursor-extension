@@ -1,0 +1,81 @@
+import * as vscode from 'vscode';
+import type { AirlancerContext } from '../extension';
+import type { ToolsTreeProvider } from '../views/tools';
+
+// ---------------------------------------------------------------------------
+// Connect / Disconnect Commands
+// ---------------------------------------------------------------------------
+
+export async function connectCommand(ctx: AirlancerContext, toolsProvider: ToolsTreeProvider): Promise<void> {
+  const config = vscode.workspace.getConfiguration('airlancer');
+  const serverUrl = (await ctx.secrets.getServerUrl()) ?? config.get<string>('serverUrl', 'https://mcp-dev.airlancer.ai');
+  const apiKey = await ctx.secrets.getApiKey();
+
+  if (!apiKey) {
+    const action = await vscode.window.showWarningMessage(
+      'No API key configured. Run the setup wizard to connect.',
+      'Setup Wizard',
+    );
+    if (action === 'Setup Wizard') {
+      vscode.commands.executeCommand('airlancer.setup');
+    }
+    return;
+  }
+
+  ctx.statusBar.setConnecting();
+  ctx.outputChannel.appendLine(`Connecting to ${serverUrl}...`);
+
+  try {
+    // Configure client.
+    ctx.client.configure(serverUrl, apiKey);
+
+    // Test connection via MCP initialize.
+    const status = await ctx.client.initialize();
+    if (!status.connected) {
+      throw new Error(status.error ?? 'Connection failed');
+    }
+
+    // Discover tools.
+    const tools = await ctx.client.listTools();
+    ctx.outputChannel.appendLine(`Connected! Server v${status.serverVersion}, ${tools.length} tools available.`);
+
+    // Register MCP server with Cursor.
+    await ctx.mcpRegistrar.register(serverUrl, apiKey);
+
+    // Update state.
+    ctx.connected = true;
+    vscode.commands.executeCommand('setContext', 'airlancer.connected', true);
+    ctx.statusBar.setConnected(tools.length);
+
+    // Update tools tree.
+    toolsProvider.setTools(tools);
+
+    // Auto-sync skills and rules.
+    if (config.get<boolean>('syncSkillsOnConnect', true)) {
+      vscode.commands.executeCommand('airlancer.syncSkills');
+    }
+    if (config.get<boolean>('syncRulesOnConnect', true)) {
+      vscode.commands.executeCommand('airlancer.syncRules');
+    }
+
+    vscode.window.showInformationMessage(
+      `Connected to Airlancer — ${tools.length} MCP tools available in Cursor.`
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    ctx.outputChannel.appendLine(`Connection failed: ${msg}`);
+    ctx.statusBar.setError(msg);
+    ctx.connected = false;
+    vscode.commands.executeCommand('setContext', 'airlancer.connected', false);
+    vscode.window.showErrorMessage(`Failed to connect to Airlancer: ${msg}`);
+  }
+}
+
+export async function disconnectCommand(ctx: AirlancerContext): Promise<void> {
+  ctx.mcpRegistrar.unregister();
+  ctx.connected = false;
+  vscode.commands.executeCommand('setContext', 'airlancer.connected', false);
+  ctx.statusBar.setDisconnected();
+  ctx.outputChannel.appendLine('Disconnected from Airlancer.');
+  vscode.window.showInformationMessage('Disconnected from Airlancer.');
+}
