@@ -135,10 +135,10 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
 // Deactivation
 // ---------------------------------------------------------------------------
 
-export function deactivate(): void {
+export async function deactivate(): Promise<void> {
   if (ctx) {
-    ctx.mcpRegistrar.unregister();
-    ctx.statusBar.dispose();
-    ctx.outputChannel.appendLine('Airlancer extension deactivated.');
+    try { ctx.outputChannel.appendLine('Airlancer extension deactivating...'); } catch { /* disposed */ }
+    await ctx.mcpRegistrar.unregister();
+    // statusBar and outputChannel disposal handled by extensionContext.subscriptions
   }
 }

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as crypto from 'crypto';
 import type { AirlancerContext } from '../extension';
 import { getSetupWizardHtml } from '../webview/setupWizard';
 
@@ -38,12 +39,14 @@ export async function setupWizardCommand(
   const currentServerUrl = (await ctx.secrets.getServerUrl()) ?? config.get<string>('serverUrl', 'https://mcp-dev.airlancer.ai');
   const currentApiKey = (await ctx.secrets.getApiKey()) ?? '';
   const dashboardUrl = config.get<string>('dashboardUrl', 'https://adlc-dev.airlancer.ai');
+  const nonce = crypto.randomBytes(16).toString('hex');
 
   panel.webview.html = getSetupWizardHtml(
     logoUri.toString(),
     currentServerUrl,
     currentApiKey ? '••••••••' : '',
     dashboardUrl,
+    nonce,
   );
 
   // Handle messages from the webview.

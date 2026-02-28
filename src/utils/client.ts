@@ -54,6 +54,7 @@ export class AirlancerClient {
   private apiKey: string = '';
   private serverUrl: string = '';
   private output: vscode.OutputChannel;
+  private nextId: number = 1;
 
   constructor(output: vscode.OutputChannel) {
     this.output = output;
@@ -72,8 +73,20 @@ export class AirlancerClient {
 
   async initialize(): Promise<ConnectionStatus> {
     try {
-      const result = await this.mcpCall('initialize', null);
+      const result = await this.mcpCall('initialize', {
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: { name: 'airlancer-cursor-extension', version: '0.2.0' },
+      });
       const serverInfo = result?.serverInfo as Record<string, unknown> | undefined;
+
+      // Send MCP initialized notification (protocol requirement).
+      try {
+        await this.mcpNotify('notifications/initialized', {});
+      } catch {
+        // Non-fatal — some servers don't require this.
+      }
+
       return {
         connected: true,
         serverVersion: (serverInfo?.version as string) ?? 'unknown',
@@ -130,7 +143,7 @@ export class AirlancerClient {
   private async mcpCall(method: string, params: unknown): Promise<Record<string, unknown>> {
     const body = JSON.stringify({
       jsonrpc: '2.0',
-      id: Date.now(),
+      id: this.nextId++,
       method,
       params,
     });
@@ -156,6 +169,27 @@ export class AirlancerClient {
     }
 
     return json.result as Record<string, unknown>;
+  }
+
+  /**
+   * Send an MCP notification (no response expected).
+   */
+  private async mcpNotify(method: string, params: unknown): Promise<void> {
+    const body = JSON.stringify({
+      jsonrpc: '2.0',
+      method,
+      params,
+    });
+
+    await fetch(`${this.serverUrl}/mcp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+      },
+      body,
+      signal: AbortSignal.timeout(5000),
+    });
   }
 
   private async httpPost(path: string, body: unknown): Promise<unknown> {

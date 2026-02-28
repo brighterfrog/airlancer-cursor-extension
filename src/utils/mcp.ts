@@ -63,7 +63,7 @@ export class McpRegistrar {
   /**
    * Unregister the MCP server (cleanup on disconnect/deactivate).
    */
-  unregister(): void {
+  async unregister(): Promise<void> {
     if (!this.registered) { return; }
 
     if (this.isCursorAvailable) {
@@ -74,8 +74,36 @@ export class McpRegistrar {
       } catch {
         // Best-effort cleanup.
       }
+    } else {
+      // Clean up .cursor/mcp.json fallback entry.
+      await this.removeMcpJsonEntry();
     }
     this.registered = false;
+  }
+
+  /**
+   * Remove the 'airlancer' entry from .cursor/mcp.json.
+   */
+  private async removeMcpJsonEntry(): Promise<void> {
+    try {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders?.length) { return; }
+
+      const root = workspaceFolders[0].uri;
+      const mcpJsonPath = vscode.Uri.joinPath(root, '.cursor', 'mcp.json');
+
+      const content = await vscode.workspace.fs.readFile(mcpJsonPath);
+      const existing = JSON.parse(Buffer.from(content).toString('utf-8'));
+      const servers = existing.mcpServers as Record<string, unknown> | undefined;
+      if (servers && 'airlancer' in servers) {
+        delete servers['airlancer'];
+        const newContent = JSON.stringify(existing, null, 2) + '\n';
+        await vscode.workspace.fs.writeFile(mcpJsonPath, Buffer.from(newContent, 'utf-8'));
+        this.output.appendLine('Removed airlancer entry from .cursor/mcp.json');
+      }
+    } catch {
+      // File might not exist — that's fine.
+    }
   }
 
   /**

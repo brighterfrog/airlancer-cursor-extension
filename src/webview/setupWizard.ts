@@ -8,17 +8,28 @@
 // 4. Guided cursor.com settings
 // ---------------------------------------------------------------------------
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 export function getSetupWizardHtml(
   logoUri: string,
   serverUrl: string,
   apiKeyMasked: string,
   dashboardUrl: string,
+  nonce: string,
 ): string {
+  const safeServerUrl = escapeHtml(serverUrl);
+  const safeApiKey = escapeHtml(apiKeyMasked);
+  const safeDashboardUrl = escapeHtml(dashboardUrl);
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: https:; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
   <title>Airlancer Setup</title>
   <style>
     :root {
@@ -188,7 +199,7 @@ export function getSetupWizardHtml(
         <div class="step-title">Server URL</div>
       </div>
       <label for="serverUrl">MCP Server URL</label>
-      <input type="text" id="serverUrl" value="${serverUrl}" placeholder="https://mcp-dev.airlancer.ai" />
+      <input type="text" id="serverUrl" value="${safeServerUrl}" placeholder="https://mcp-dev.airlancer.ai" />
       <p class="muted">Your Airlancer MCP server endpoint. Default works for most setups.</p>
     </div>
 
@@ -199,7 +210,7 @@ export function getSetupWizardHtml(
         <div class="step-title">API Key</div>
       </div>
       <label for="apiKey">Airlancer API Key</label>
-      <input type="password" id="apiKey" value="${apiKeyMasked}" placeholder="alr_live_..." />
+      <input type="password" id="apiKey" value="${safeApiKey}" placeholder="alr_live_..." />
       <p class="muted">
         Get your API key from the
         <a class="link" onclick="openDashboard()">Airlancer Dashboard</a>
@@ -253,7 +264,7 @@ export function getSetupWizardHtml(
     </div>
   </div>
 
-  <script>
+  <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
 
     function testConnection() {
@@ -268,15 +279,18 @@ export function getSetupWizardHtml(
       vscode.postMessage({ type: 'save', serverUrl, apiKey });
     }
 
+    let pendingConnect = false;
+
     function connect() {
       const serverUrl = document.getElementById('serverUrl').value;
       const apiKey = document.getElementById('apiKey').value;
+      pendingConnect = true;
       vscode.postMessage({ type: 'save', serverUrl, apiKey });
-      setTimeout(() => vscode.postMessage({ type: 'connect' }), 200);
+      // Connect will fire when we receive the 'saved' confirmation.
     }
 
     function openDashboard() {
-      vscode.postMessage({ type: 'openDashboard', url: '${dashboardUrl}' });
+      vscode.postMessage({ type: 'openDashboard', url: '${safeDashboardUrl}' });
     }
 
     function openCursorSettings() {
@@ -317,8 +331,13 @@ export function getSetupWizardHtml(
           break;
 
         case 'saved':
-          status.className = 'status show success';
-          status.textContent = '💾 Configuration saved.';
+          if (pendingConnect) {
+            pendingConnect = false;
+            vscode.postMessage({ type: 'connect' });
+          } else {
+            status.className = 'status show success';
+            status.textContent = '💾 Configuration saved.';
+          }
           break;
 
         case 'error':

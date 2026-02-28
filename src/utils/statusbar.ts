@@ -40,6 +40,7 @@ export class StatusBarManager {
   setError(message: string): void {
     this.item.text = '$(error) Airlancer';
     this.item.tooltip = `Connection error: ${message}`;
+    this.item.command = 'airlancer.setup';
     this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
   }
 
