@@ -1,8 +1,8 @@
 {
   "name": "airlancer",
-  "displayName": "Airlancer — AI Platform for Cursor",
-  "description": "Connect Cursor to the Airlancer governance platform. Auto-configure MCP tools, sync team skills & rules, enforce cost budgets, and get policy-aware AI assistance.",
-  "version": "0.2.0",
+  "displayName": "Airlancer — AI Governance for Cursor & Antigravity",
+  "description": "Connect Cursor, Antigravity, or VS Code to the Airlancer governance platform. Auto-configure MCP tools, sync team skills & rules, enforce cost budgets, and get policy-aware AI assistance.",
+  "version": "0.3.0",
   "publisher": "airlancer",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -17,6 +17,8 @@
     "airlancer",
     "mcp",
     "cursor",
+    "antigravity",
+    "google-antigravity",
     "governance",
     "ai-platform",
     "sdlc",
@@ -29,11 +31,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/airlancer/airlancer-cursor-extension"
+    "url": "https://github.com/brighterfrog/airlancer-cursor-extension"
   },
   "homepage": "https://airlancer.ai",
   "bugs": {
-    "url": "https://github.com/airlancer/airlancer-cursor-extension/issues"
+    "url": "https://github.com/brighterfrog/airlancer-cursor-extension/issues"
   },
   "galleryBanner": {
     "color": "#0f172a",

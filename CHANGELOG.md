@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0] - 2026-02-28
+
+### Added
+- **Google Antigravity support**: auto-detect and write `~/.gemini/antigravity/mcp_config.json`
+- Multi-IDE MCP registrar: Cursor API → Antigravity config → Cursor file → VS Code fallback
+- Setup scripts: `scripts/setup-antigravity.sh`, `scripts/setup-cursor.sh`
+- Publish script: `scripts/publish.sh` for manual marketplace publishing
+- GitHub Actions CI/CD push to VS Code Marketplace + Open VSX
+
+### Changed
+- Extension display name updated to "Airlancer — AI Governance for Cursor & Antigravity"
+- README expanded with native MCP setup docs for Antigravity
+- Package size reduced from 2.49MB to 1.26MB (excluded dead resources/)
+- Repository URL updated to actual GitHub remote
+
 ## [0.2.0] - 2026-02-28
 
 ### Fixed

@@ -10,4 +10,5 @@ tsconfig.json
 **/*.d.ts.map
 .eslintrc*
 .github/**
+scripts/**
 *.vsix

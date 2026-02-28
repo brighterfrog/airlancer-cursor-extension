@@ -1,13 +1,19 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
 
 // ---------------------------------------------------------------------------
-// Cursor MCP Server Registrar
+// MCP Server Registrar — Cursor, Antigravity, and VS Code
 //
-// Uses the Cursor-specific extension API (`vscode.cursor.mcp.registerServer`)
-// to programmatically register the Airlancer MCP server. This means users
-// don't need to manually edit .cursor/mcp.json.
+// Registration priority:
+//   1. Cursor API (vscode.cursor.mcp.registerServer) — programmatic
+//   2. Antigravity config (~/.gemini/antigravity/mcp_config.json) — file-based
+//   3. Cursor fallback (.cursor/mcp.json in workspace) — file-based
 //
-// In standard VS Code (no Cursor API), falls back to writing .cursor/mcp.json.
+// For Antigravity, we write to the global MCP config since Antigravity
+// reads that at startup. For Cursor, we write to the workspace-level
+// .cursor/mcp.json as a fallback when the programmatic API isn't available.
 // ---------------------------------------------------------------------------
 
 const SERVER_NAME = 'airlancer-platform';
@@ -22,8 +28,11 @@ interface CursorApi {
   };
 }
 
+type IdeType = 'cursor-api' | 'antigravity' | 'cursor-file' | 'vscode';
+
 export class McpRegistrar {
   private registered = false;
+  private registeredVia: IdeType | null = null;
   private output: vscode.OutputChannel;
 
   constructor(output: vscode.OutputChannel) {
@@ -35,28 +44,80 @@ export class McpRegistrar {
   }
 
   /**
-   * Register the Airlancer MCP server with Cursor.
-   * Falls back to .cursor/mcp.json if the Cursor API is unavailable.
+   * Detect which IDE we're running in.
+   */
+  private detectIde(): IdeType {
+    // 1. Cursor programmatic API
+    if (this.isCursorAvailable) {
+      return 'cursor-api';
+    }
+
+    // 2. Antigravity detection: check appName and ~/.gemini directory
+    const appName = vscode.env.appName?.toLowerCase() ?? '';
+    const hasGeminiDir = fs.existsSync(path.join(os.homedir(), '.gemini'));
+
+    if (appName.includes('antigravity') || (hasGeminiDir && !appName.includes('cursor'))) {
+      return 'antigravity';
+    }
+
+    // 3. Cursor file fallback (appName includes "cursor" but no API)
+    if (appName.includes('cursor')) {
+      return 'cursor-file';
+    }
+
+    // 4. Standard VS Code — use .cursor/mcp.json as it's the most common format
+    return 'vscode';
+  }
+
+  /**
+   * Antigravity MCP config path.
+   */
+  private get antigravityConfigPath(): string {
+    return path.join(os.homedir(), '.gemini', 'antigravity', 'mcp_config.json');
+  }
+
+  /**
+   * Register the Airlancer MCP server with the detected IDE.
    */
   async register(serverUrl: string, apiKey: string): Promise<void> {
     const mcpUrl = `${serverUrl.replace(/\/+$/, '')}/mcp`;
+    const ide = this.detectIde();
+    this.output.appendLine(`Detected IDE: ${ide}`);
 
-    if (this.isCursorAvailable) {
-      this.output.appendLine('Registering MCP server via Cursor API...');
-      const cursor = (vscode as unknown as { cursor: CursorApi }).cursor;
-      cursor.mcp.registerServer({
-        name: SERVER_NAME,
-        server: {
-          url: mcpUrl,
-          headers: { Authorization: `Bearer ${apiKey}` },
-        },
-      });
-      this.registered = true;
-      this.output.appendLine('MCP server registered via Cursor API.');
-    } else {
-      this.output.appendLine('Cursor API not available — writing .cursor/mcp.json...');
-      await this.writeMcpJson(mcpUrl, apiKey);
-      this.registered = true;
+    switch (ide) {
+      case 'cursor-api': {
+        this.output.appendLine('Registering MCP server via Cursor API...');
+        const cursor = (vscode as unknown as { cursor: CursorApi }).cursor;
+        cursor.mcp.registerServer({
+          name: SERVER_NAME,
+          server: {
+            url: mcpUrl,
+            headers: { Authorization: `Bearer ${apiKey}` },
+          },
+        });
+        this.registered = true;
+        this.registeredVia = 'cursor-api';
+        this.output.appendLine('MCP server registered via Cursor API.');
+        break;
+      }
+
+      case 'antigravity': {
+        this.output.appendLine('Registering MCP server for Antigravity...');
+        await this.writeAntigravityConfig(mcpUrl, apiKey);
+        this.registered = true;
+        this.registeredVia = 'antigravity';
+        break;
+      }
+
+      case 'cursor-file':
+      case 'vscode':
+      default: {
+        this.output.appendLine(`Registering MCP server via .cursor/mcp.json (${ide})...`);
+        await this.writeCursorMcpJson(mcpUrl, apiKey);
+        this.registered = true;
+        this.registeredVia = ide;
+        break;
+      }
     }
   }
 
@@ -66,55 +127,93 @@ export class McpRegistrar {
   async unregister(): Promise<void> {
     if (!this.registered) { return; }
 
-    if (this.isCursorAvailable) {
-      try {
-        const cursor = (vscode as unknown as { cursor: CursorApi }).cursor;
-        cursor.mcp.unregisterServer(SERVER_NAME);
-        this.output.appendLine('MCP server unregistered via Cursor API.');
-      } catch {
-        // Best-effort cleanup.
+    switch (this.registeredVia) {
+      case 'cursor-api': {
+        try {
+          const cursor = (vscode as unknown as { cursor: CursorApi }).cursor;
+          cursor.mcp.unregisterServer(SERVER_NAME);
+          this.output.appendLine('MCP server unregistered via Cursor API.');
+        } catch {
+          // Best-effort cleanup.
+        }
+        break;
       }
-    } else {
-      // Clean up .cursor/mcp.json fallback entry.
-      await this.removeMcpJsonEntry();
+
+      case 'antigravity': {
+        await this.removeAntigravityEntry();
+        break;
+      }
+
+      case 'cursor-file':
+      case 'vscode':
+      default: {
+        await this.removeCursorMcpJsonEntry();
+        break;
+      }
     }
+
     this.registered = false;
+    this.registeredVia = null;
   }
 
-  /**
-   * Remove the 'airlancer' entry from .cursor/mcp.json.
-   */
-  private async removeMcpJsonEntry(): Promise<void> {
+  // --- Antigravity Config ---
+
+  private async writeAntigravityConfig(mcpUrl: string, apiKey: string): Promise<void> {
+    const configPath = this.antigravityConfigPath;
+    const configDir = path.dirname(configPath);
+
+    // Ensure directory exists.
+    fs.mkdirSync(configDir, { recursive: true });
+
+    // Read existing config.
+    let config: Record<string, unknown> = {};
     try {
-      const workspaceFolders = vscode.workspace.workspaceFolders;
-      if (!workspaceFolders?.length) { return; }
+      const content = fs.readFileSync(configPath, 'utf-8');
+      config = JSON.parse(content);
+    } catch {
+      // File doesn't exist or invalid — start fresh.
+    }
 
-      const root = workspaceFolders[0].uri;
-      const mcpJsonPath = vscode.Uri.joinPath(root, '.cursor', 'mcp.json');
+    const servers = (config.mcpServers ?? {}) as Record<string, unknown>;
+    servers['airlancer'] = {
+      serverUrl: mcpUrl,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    };
+    config.mcpServers = servers;
 
-      const content = await vscode.workspace.fs.readFile(mcpJsonPath);
-      const existing = JSON.parse(Buffer.from(content).toString('utf-8'));
-      const servers = existing.mcpServers as Record<string, unknown> | undefined;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+    this.output.appendLine(`Wrote Antigravity MCP config: ${configPath}`);
+    vscode.window.showInformationMessage('Airlancer MCP registered with Antigravity. Restart Antigravity to activate.');
+  }
+
+  private async removeAntigravityEntry(): Promise<void> {
+    try {
+      const configPath = this.antigravityConfigPath;
+      if (!fs.existsSync(configPath)) { return; }
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const config = JSON.parse(content);
+      const servers = config.mcpServers as Record<string, unknown> | undefined;
       if (servers && 'airlancer' in servers) {
         delete servers['airlancer'];
-        const newContent = JSON.stringify(existing, null, 2) + '\n';
-        await vscode.workspace.fs.writeFile(mcpJsonPath, Buffer.from(newContent, 'utf-8'));
-        this.output.appendLine('Removed airlancer entry from .cursor/mcp.json');
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+        this.output.appendLine('Removed airlancer from Antigravity MCP config.');
       }
     } catch {
-      // File might not exist — that's fine.
+      // Best-effort.
     }
   }
 
-  /**
-   * Fallback: write .cursor/mcp.json to workspace root.
-   */
-  private async writeMcpJson(mcpUrl: string, apiKey: string): Promise<void> {
+  // --- Cursor / VS Code File Fallback ---
+
+  private async writeCursorMcpJson(mcpUrl: string, apiKey: string): Promise<void> {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders?.length) {
       this.output.appendLine('No workspace folder open — cannot write .cursor/mcp.json');
       vscode.window.showWarningMessage(
-        'Open a folder in Cursor first, then run "Airlancer: Connect" to create the MCP config.'
+        'Open a folder first, then run "Airlancer: Connect" to create the MCP config.'
       );
       return;
     }
@@ -146,5 +245,27 @@ export class McpRegistrar {
     await vscode.workspace.fs.createDirectory(cursorDir);
     await vscode.workspace.fs.writeFile(mcpJsonPath, Buffer.from(newContent, 'utf-8'));
     this.output.appendLine(`Wrote ${mcpJsonPath.fsPath}`);
+  }
+
+  private async removeCursorMcpJsonEntry(): Promise<void> {
+    try {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders?.length) { return; }
+
+      const root = workspaceFolders[0].uri;
+      const mcpJsonPath = vscode.Uri.joinPath(root, '.cursor', 'mcp.json');
+
+      const content = await vscode.workspace.fs.readFile(mcpJsonPath);
+      const existing = JSON.parse(Buffer.from(content).toString('utf-8'));
+      const servers = existing.mcpServers as Record<string, unknown> | undefined;
+      if (servers && 'airlancer' in servers) {
+        delete servers['airlancer'];
+        const newContent = JSON.stringify(existing, null, 2) + '\n';
+        await vscode.workspace.fs.writeFile(mcpJsonPath, Buffer.from(newContent, 'utf-8'));
+        this.output.appendLine('Removed airlancer entry from .cursor/mcp.json');
+      }
+    } catch {
+      // File might not exist — that's fine.
+    }
   }
 }
