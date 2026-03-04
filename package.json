@@ -101,7 +101,7 @@
       "properties": {
         "airlancer.serverUrl": {
           "type": "string",
-          "default": "https://mcp-dev.airlancer.ai",
+          "default": "https://api-dev.airlancer.ai",
           "description": "Airlancer MCP server URL",
           "order": 1
         },

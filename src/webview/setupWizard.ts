@@ -199,7 +199,7 @@ export function getSetupWizardHtml(
         <div class="step-title">Server URL</div>
       </div>
       <label for="serverUrl">MCP Server URL</label>
-      <input type="text" id="serverUrl" value="${safeServerUrl}" placeholder="https://mcp-dev.airlancer.ai" />
+      <input type="text" id="serverUrl" value="${safeServerUrl}" placeholder="https://api-dev.airlancer.ai" />
       <p class="muted">Your Airlancer MCP server endpoint. Default works for most setups.</p>
     </div>
 
@@ -212,9 +212,8 @@ export function getSetupWizardHtml(
       <label for="apiKey">Airlancer API Key</label>
       <input type="password" id="apiKey" value="${safeApiKey}" placeholder="alr_live_..." />
       <p class="muted">
-        Get your API key from the
-        <a class="link" onclick="openDashboard()">Airlancer Dashboard</a>
-        → Settings → API Keys.
+        Create an API key with 'MCP' scope, then paste it below. Get it from the
+        <a class="link" onclick="openDashboardApiKeys()">Airlancer Dashboard → Settings → API Keys</a>.
       </p>
     </div>
 
@@ -255,7 +254,7 @@ export function getSetupWizardHtml(
       <ul class="checklist">
         <li>Set default model to <strong>claude-sonnet-4-5</strong> for best results</li>
         <li>Enable <strong>Long-running agents</strong> for complex workflows</li>
-        <li>Add <strong>mcp-dev.airlancer.ai</strong> to the network allowlist</li>
+        <li>Add <strong>api-dev.airlancer.ai</strong> to the network allowlist</li>
         <li>Enable <strong>Agent summaries visible to team</strong> for collaboration</li>
       </ul>
       <div class="btn-row" style="margin-top: 12px;">
@@ -291,6 +290,10 @@ export function getSetupWizardHtml(
 
     function openDashboard() {
       vscode.postMessage({ type: 'openDashboard', url: '${safeDashboardUrl}' });
+    }
+
+    function openDashboardApiKeys() {
+      vscode.postMessage({ type: 'openDashboard', url: '${safeDashboardUrl}/settings/api-keys' });
     }
 
     function openCursorSettings() {
