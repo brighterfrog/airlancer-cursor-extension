@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { version as EXTENSION_VERSION } from '../../package.json';
 
 // ---------------------------------------------------------------------------
 // Airlancer Platform Client
@@ -76,7 +77,7 @@ export class AirlancerClient {
       const result = await this.mcpCall('initialize', {
         protocolVersion: '2024-11-05',
         capabilities: {},
-        clientInfo: { name: 'airlancer-cursor-extension', version: '0.2.0' },
+        clientInfo: { name: 'airlancer-cursor-extension', version: EXTENSION_VERSION },
       });
       const serverInfo = result?.serverInfo as Record<string, unknown> | undefined;
 
