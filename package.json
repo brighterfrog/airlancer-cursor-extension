@@ -101,7 +101,7 @@
       "properties": {
         "airlancer.serverUrl": {
           "type": "string",
-          "default": "https://api-dev.airlancer.ai",
+          "default": "https://mcp-dev.airlancer.ai",
           "description": "Airlancer MCP server URL",
           "order": 1
         },
@@ -187,7 +187,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "node scripts/inject-config.js && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
     "package": "vsce package",

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import type { AirlancerContext } from '../extension';
 import { getSetupWizardHtml } from '../webview/setupWizard';
+import { DEFAULT_MCP_SERVER_URL, DEFAULT_DASHBOARD_URL } from '../generated/config';
 
 // ---------------------------------------------------------------------------
 // Setup Wizard Command
@@ -36,9 +37,9 @@ export async function setupWizardCommand(
   );
 
   const config = vscode.workspace.getConfiguration('airlancer');
-  const currentServerUrl = (await ctx.secrets.getServerUrl()) ?? config.get<string>('serverUrl', 'https://mcp-dev.airlancer.ai');
+  const currentServerUrl = (await ctx.secrets.getServerUrl()) ?? config.get<string>('serverUrl', DEFAULT_MCP_SERVER_URL);
   const currentApiKey = (await ctx.secrets.getApiKey()) ?? '';
-  const dashboardUrl = config.get<string>('dashboardUrl', 'https://adlc-dev.airlancer.ai');
+  const dashboardUrl = config.get<string>('dashboardUrl', DEFAULT_DASHBOARD_URL);
   const nonce = crypto.randomBytes(16).toString('hex');
 
   panel.webview.html = getSetupWizardHtml(

@@ -199,7 +199,7 @@ export function getSetupWizardHtml(
         <div class="step-title">Server URL</div>
       </div>
       <label for="serverUrl">MCP Server URL</label>
-      <input type="text" id="serverUrl" value="${safeServerUrl}" placeholder="https://api-dev.airlancer.ai" />
+      <input type="text" id="serverUrl" value="${safeServerUrl}" placeholder="${safeServerUrl}" />
       <p class="muted">Your Airlancer MCP server endpoint. Default works for most setups.</p>
     </div>
 
@@ -254,7 +254,7 @@ export function getSetupWizardHtml(
       <ul class="checklist">
         <li>Set default model to <strong>claude-sonnet-4-5</strong> for best results</li>
         <li>Enable <strong>Long-running agents</strong> for complex workflows</li>
-        <li>Add <strong>api-dev.airlancer.ai</strong> to the network allowlist</li>
+        <li>Add <strong>${safeServerUrl}</strong> to the network allowlist</li>
         <li>Enable <strong>Agent summaries visible to team</strong> for collaboration</li>
       </ul>
       <div class="btn-row" style="margin-top: 12px;">

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { DEFAULT_DASHBOARD_URL } from './generated/config';
 import { AirlancerClient } from './utils/client';
 import { StatusBarManager } from './utils/statusbar';
 import { SecretStorage } from './utils/secrets';
@@ -86,7 +87,7 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
     vscode.commands.registerCommand('airlancer.showStatus', () => showStatusCommand(ctx)),
     vscode.commands.registerCommand('airlancer.createApiKey', () => createApiKeyCommand(ctx)),
     vscode.commands.registerCommand('airlancer.openDashboard', () => {
-      const url = vscode.workspace.getConfiguration('airlancer').get<string>('dashboardUrl', 'https://adlc-dev.airlancer.ai');
+      const url = vscode.workspace.getConfiguration('airlancer').get<string>('dashboardUrl', DEFAULT_DASHBOARD_URL);
       vscode.env.openExternal(vscode.Uri.parse(url));
     }),
     statusBar.item,

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { AirlancerContext } from '../extension';
 import type { ToolsTreeProvider } from '../views/tools';
+import { DEFAULT_MCP_SERVER_URL } from '../generated/config';
 
 // ---------------------------------------------------------------------------
 // Connect / Disconnect Commands
@@ -8,7 +9,7 @@ import type { ToolsTreeProvider } from '../views/tools';
 
 export async function connectCommand(ctx: AirlancerContext, toolsProvider: ToolsTreeProvider): Promise<void> {
   const config = vscode.workspace.getConfiguration('airlancer');
-  const serverUrl = (await ctx.secrets.getServerUrl()) ?? config.get<string>('serverUrl', 'https://mcp-dev.airlancer.ai');
+  const serverUrl = (await ctx.secrets.getServerUrl()) ?? config.get<string>('serverUrl', DEFAULT_MCP_SERVER_URL);
   const apiKey = await ctx.secrets.getApiKey();
 
   if (!apiKey) {
