@@ -2,7 +2,7 @@
   "name": "airlancer",
   "displayName": "Airlancer — AI Governance for Cursor & Antigravity",
   "description": "Connect Cursor, Antigravity, or VS Code to the Airlancer governance platform. Auto-configure MCP tools, sync team skills & rules, enforce cost budgets, and get policy-aware AI assistance.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "airlancer",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -42,6 +42,7 @@
     "theme": "dark"
   },
   "main": "./out/extension.js",
+  "extensionKind": ["ui"],
   "activationEvents": [
     "onStartupFinished"
   ],

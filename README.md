@@ -124,6 +124,48 @@ Get your API key from the [Airlancer Dashboard](https://adlc-dev.airlancer.ai) â
 - **Cursor** 0.44+ / **Google Antigravity** / **VS Code** 1.85+
 - An **Airlancer** account with API access
 
+## Development
+
+### Build from Source
+
+```bash
+npm ci
+npm run compile
+
+# Package as .vsix
+npx @vscode/vsce package --no-dependencies
+
+# Install locally (no marketplace needed)
+cursor --install-extension airlancer-0.4.0.vsix --force
+# Or: code --install-extension airlancer-0.4.0.vsix --force
+
+# Quick rebuild loop
+npm run compile && npx @vscode/vsce package --no-dependencies && cursor --install-extension airlancer-*.vsix --force
+```
+
+### Environment Builds
+
+```bash
+# Development (default)
+AIRLANCER_ENV=dev npm run compile
+
+# Production
+AIRLANCER_ENV=prod npm run compile
+```
+
+### Publish
+
+```bash
+# VS Code Marketplace
+npm run publish:vscode
+
+# Open VSX Registry
+npm run publish:openvsx
+
+# Both
+npm run publish:all
+```
+
 ## Links
 
 - [Airlancer Platform](https://airlancer.ai)

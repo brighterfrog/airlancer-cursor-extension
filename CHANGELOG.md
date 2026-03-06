@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0] - 2026-03-05
+
+### Added
+- Environment-aware builds: `AIRLANCER_ENV=dev|prod` controls default URLs at compile time
+- Generated config (`src/generated/config.ts`) replaces all hardcoded URL fallbacks
+- Cloud Build substitution `_AIRLANCER_ENV` for CI/CD environment selection
+
+### Fixed
+- URL inconsistency: `api-dev.airlancer.ai` → `mcp-dev.airlancer.ai` (correct MCP server hostname)
+- Extension now uses `extensionKind: ["ui"]` for reliable keychain access
+
+### Changed
+- `compile` script runs `inject-config.js` before TypeScript compilation
+- All source files import URLs from `src/generated/config.ts` instead of hardcoding
+
 ## [0.3.0] - 2026-02-28
 
 ### Added
