@@ -52,6 +52,16 @@ export async function connectCommand(ctx: AirlancerContext, toolsProvider: Tools
     toolsProvider.setTools(tools);
     ctx.statusTree.setConnected(serverUrl, status.serverVersion, tools.length);
 
+    // Fetch team IDE config for role-aware setup.
+    try {
+      const ideConfig = await ctx.client.fetchIDEConfig();
+      ctx.statusTree.setTeamInfo(ideConfig.role, ideConfig.scopes);
+      ctx.outputChannel.appendLine(`Team config: role=${ideConfig.role}, scopes=${ideConfig.scopes.join(',')}`);
+    } catch (err) {
+      // Non-fatal — team config is informational.
+      ctx.outputChannel.appendLine(`Team config fetch skipped: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
     // Auto-sync skills and rules.
     if (config.get<boolean>('syncSkillsOnConnect', true)) {
       vscode.commands.executeCommand('airlancer.syncSkills');

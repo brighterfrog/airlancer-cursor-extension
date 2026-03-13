@@ -51,6 +51,17 @@ export interface ApiKeyCreateResponse {
   expiresAt?: string;
 }
 
+export interface IDEConfig {
+  tenantId: string;
+  role: string;
+  scopes: string[];
+  mcpConfig: {
+    type: string;
+    url: string;
+    headers: Record<string, string>;
+  };
+}
+
 export class AirlancerClient {
   private apiKey: string = '';
   private serverUrl: string = '';
@@ -139,6 +150,11 @@ export class AirlancerClient {
     return resp as ApiKeyCreateResponse;
   }
 
+  async fetchIDEConfig(): Promise<IDEConfig> {
+    const resp = await this.httpGet('/api/v1/ide/config');
+    return resp as IDEConfig;
+  }
+
   // --- Internal HTTP ---
 
   private async mcpCall(method: string, params: unknown): Promise<Record<string, unknown>> {
@@ -191,6 +207,23 @@ export class AirlancerClient {
       body,
       signal: AbortSignal.timeout(5000),
     });
+  }
+
+  private async httpGet(path: string): Promise<unknown> {
+    const resp = await fetch(`${this.serverUrl}${path}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`API error ${resp.status}: ${text.slice(0, 200)}`);
+    }
+
+    return resp.json();
   }
 
   private async httpPost(path: string, body: unknown): Promise<unknown> {

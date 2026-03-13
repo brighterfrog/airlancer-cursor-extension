@@ -15,6 +15,8 @@ export class StatusTreeProvider implements vscode.TreeDataProvider<StatusItem> {
   private serverVersion = '';
   private toolCount = 0;
   private serverUrl = '';
+  private teamRole = '';
+  private teamScopes: string[] = [];
 
   setConnected(serverUrl: string, serverVersion: string, toolCount: number): void {
     this.connected = true;
@@ -24,11 +26,19 @@ export class StatusTreeProvider implements vscode.TreeDataProvider<StatusItem> {
     this._onDidChangeTreeData.fire(undefined);
   }
 
+  setTeamInfo(role: string, scopes: string[]): void {
+    this.teamRole = role;
+    this.teamScopes = scopes;
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
   setDisconnected(): void {
     this.connected = false;
     this.serverUrl = '';
     this.serverVersion = '';
     this.toolCount = 0;
+    this.teamRole = '';
+    this.teamScopes = [];
     this._onDidChangeTreeData.fire(undefined);
   }
 
@@ -44,15 +54,25 @@ export class StatusTreeProvider implements vscode.TreeDataProvider<StatusItem> {
       ];
     }
 
-    return [
+    const items = [
       new StatusItem('$(pass-filled) Connected', this.serverUrl, 'success'),
       new StatusItem('$(versions) Server', `v${this.serverVersion}`, 'info'),
       new StatusItem('$(tools) Tools', `${this.toolCount} available`, 'info'),
+    ];
+
+    if (this.teamRole) {
+      items.push(new StatusItem('$(person) Role', this.teamRole, 'info'));
+      items.push(new StatusItem('$(key) Scopes', this.teamScopes.join(', '), 'info'));
+    }
+
+    items.push(
       new StatusItem('$(sync) Sync Skills', '', 'action', 'airlancer.syncSkills'),
       new StatusItem('$(law) Sync Rules', '', 'action', 'airlancer.syncRules'),
       new StatusItem('$(link-external) Open Dashboard', '', 'action', 'airlancer.openDashboard'),
       new StatusItem('$(debug-disconnect) Disconnect', '', 'action', 'airlancer.disconnect'),
-    ];
+    );
+
+    return items;
   }
 }
 
