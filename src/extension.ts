@@ -12,6 +12,7 @@ import { browsePromptsCommand } from './commands/browsePrompts';
 import { insertPromptCommand } from './commands/insertPrompt';
 import { editPromptWithAICommand } from './commands/editPromptWithAI';
 import { generatePromptCommand } from './commands/generatePrompt';
+import { promptWizardCommand } from './commands/promptWizard';
 import { showStatusCommand } from './commands/status';
 import { createApiKeyCommand } from './commands/apikey';
 import { SkillsSync } from './sync/skills';
@@ -105,6 +106,7 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
     vscode.commands.registerCommand('airlancer.insertPrompt', () => insertPromptCommand(ctx)),
     vscode.commands.registerCommand('airlancer.editPromptWithAI', () => editPromptWithAICommand(ctx)),
     vscode.commands.registerCommand('airlancer.generatePrompt', () => generatePromptCommand(ctx)),
+    vscode.commands.registerCommand('airlancer.promptWizard', () => promptWizardCommand(extensionContext, ctx)),
     vscode.commands.registerCommand('airlancer.showStatus', () => showStatusCommand(ctx)),
     vscode.commands.registerCommand('airlancer.createApiKey', () => createApiKeyCommand(ctx)),
     vscode.commands.registerCommand('airlancer.openDashboard', () => {

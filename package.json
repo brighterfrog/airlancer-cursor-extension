@@ -125,6 +125,20 @@
         "title": "Generate Prompt from Description",
         "category": "Airlancer",
         "icon": "$(sparkle)"
+      },
+      {
+        "command": "airlancer.promptWizard",
+        "title": "Prompt Wizard",
+        "category": "Airlancer",
+        "icon": "$(wand)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "airlancer.promptWizard",
+        "key": "ctrl+shift+;",
+        "mac": "cmd+shift+;",
+        "when": "airlancer.connected"
       }
     ],
     "configuration": {
@@ -248,6 +262,10 @@
         },
         {
           "command": "airlancer.generatePrompt",
+          "when": "airlancer.connected"
+        },
+        {
+          "command": "airlancer.promptWizard",
           "when": "airlancer.connected"
         }
       ]
