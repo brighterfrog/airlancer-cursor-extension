@@ -7,14 +7,22 @@ import { connectCommand, disconnectCommand } from './commands/connect';
 import { setupWizardCommand } from './commands/setup';
 import { syncSkillsCommand } from './commands/syncSkills';
 import { syncRulesCommand } from './commands/syncRules';
+import { syncPromptsCommand } from './commands/syncPrompts';
+import { browsePromptsCommand } from './commands/browsePrompts';
+import { insertPromptCommand } from './commands/insertPrompt';
+import { editPromptWithAICommand } from './commands/editPromptWithAI';
+import { generatePromptCommand } from './commands/generatePrompt';
 import { showStatusCommand } from './commands/status';
 import { createApiKeyCommand } from './commands/apikey';
 import { SkillsSync } from './sync/skills';
 import { RulesSync } from './sync/rules';
+import { PromptsSync } from './sync/prompts';
+import { CursorRulesSync } from './sync/cursorrules';
 import { McpRegistrar } from './utils/mcp';
 import { ToolsTreeProvider } from './views/tools';
 import { SkillsTreeProvider } from './views/skillsTree';
 import { RulesTreeProvider } from './views/rulesTree';
+import { PromptsTreeProvider } from './views/promptsTree';
 import { StatusTreeProvider } from './views/statusTree';
 
 // ---------------------------------------------------------------------------
@@ -29,6 +37,8 @@ export interface AirlancerContext {
   mcpRegistrar: McpRegistrar;
   skillsSync: SkillsSync;
   rulesSync: RulesSync;
+  promptsSync: PromptsSync;
+  cursorRulesSync: CursorRulesSync;
   connected: boolean;
   outputChannel: vscode.OutputChannel;
 }
@@ -54,6 +64,8 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
   const mcpRegistrar = new McpRegistrar(outputChannel);
   const skillsSync = new SkillsSync(client, outputChannel);
   const rulesSync = new RulesSync(client, outputChannel);
+  const promptsSync = new PromptsSync(client, outputChannel);
+  const cursorRulesSync = new CursorRulesSync(client, outputChannel);
   const statusTree = new StatusTreeProvider();
 
   ctx = {
@@ -64,6 +76,8 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
     mcpRegistrar,
     skillsSync,
     rulesSync,
+    promptsSync,
+    cursorRulesSync,
     connected: false,
     outputChannel,
   };
@@ -72,10 +86,12 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
   const toolsProvider = new ToolsTreeProvider();
   const skillsProvider = new SkillsTreeProvider();
   const rulesProvider = new RulesTreeProvider();
+  const promptsProvider = new PromptsTreeProvider();
   vscode.window.registerTreeDataProvider('airlancer.status', statusTree);
   vscode.window.registerTreeDataProvider('airlancer.tools', toolsProvider);
   vscode.window.registerTreeDataProvider('airlancer.skills', skillsProvider);
   vscode.window.registerTreeDataProvider('airlancer.rules', rulesProvider);
+  vscode.window.registerTreeDataProvider('airlancer.prompts', promptsProvider);
 
   // Register commands.
   extensionContext.subscriptions.push(
@@ -84,6 +100,11 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
     vscode.commands.registerCommand('airlancer.setup', () => setupWizardCommand(extensionContext, ctx)),
     vscode.commands.registerCommand('airlancer.syncSkills', () => syncSkillsCommand(ctx, skillsProvider)),
     vscode.commands.registerCommand('airlancer.syncRules', () => syncRulesCommand(ctx, rulesProvider)),
+    vscode.commands.registerCommand('airlancer.syncPrompts', () => syncPromptsCommand(ctx, promptsProvider)),
+    vscode.commands.registerCommand('airlancer.browsePrompts', () => browsePromptsCommand(ctx)),
+    vscode.commands.registerCommand('airlancer.insertPrompt', () => insertPromptCommand(ctx)),
+    vscode.commands.registerCommand('airlancer.editPromptWithAI', () => editPromptWithAICommand(ctx)),
+    vscode.commands.registerCommand('airlancer.generatePrompt', () => generatePromptCommand(ctx)),
     vscode.commands.registerCommand('airlancer.showStatus', () => showStatusCommand(ctx)),
     vscode.commands.registerCommand('airlancer.createApiKey', () => createApiKeyCommand(ctx)),
     vscode.commands.registerCommand('airlancer.openDashboard', () => {
@@ -110,6 +131,7 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
   // Start periodic sync timers.
   const skillsInterval = config.get<number>('skillsSyncInterval', 300);
   const rulesInterval = config.get<number>('rulesSyncInterval', 300);
+  const promptsInterval = config.get<number>('promptsSyncInterval', 300);
 
   if (skillsInterval > 0) {
     const timer = setInterval(async () => {
@@ -126,6 +148,15 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
         await syncRulesCommand(ctx, rulesProvider);
       }
     }, rulesInterval * 1000);
+    extensionContext.subscriptions.push({ dispose: () => clearInterval(timer) });
+  }
+
+  if (promptsInterval > 0) {
+    const timer = setInterval(async () => {
+      if (ctx.connected) {
+        await syncPromptsCommand(ctx, promptsProvider);
+      }
+    }, promptsInterval * 1000);
     extensionContext.subscriptions.push({ dispose: () => clearInterval(timer) });
   }
 

@@ -62,12 +62,15 @@ export async function connectCommand(ctx: AirlancerContext, toolsProvider: Tools
       ctx.outputChannel.appendLine(`Team config fetch skipped: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // Auto-sync skills and rules.
+    // Auto-sync skills, rules, and prompts.
     if (config.get<boolean>('syncSkillsOnConnect', true)) {
       vscode.commands.executeCommand('airlancer.syncSkills');
     }
     if (config.get<boolean>('syncRulesOnConnect', true)) {
       vscode.commands.executeCommand('airlancer.syncRules');
+    }
+    if (config.get<boolean>('syncPromptsOnConnect', true)) {
+      vscode.commands.executeCommand('airlancer.syncPrompts');
     }
 
     vscode.window.showInformationMessage(

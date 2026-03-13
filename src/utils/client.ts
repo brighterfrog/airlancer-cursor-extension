@@ -145,6 +145,17 @@ export class AirlancerClient {
     return [];
   }
 
+  async fetchPrompts(label?: string): Promise<unknown[]> {
+    const args: Record<string, unknown> = {};
+    if (label) { args.label = label; }
+    const result = await this.callTool('airlancer.prompts.list', args);
+    if (Array.isArray(result)) { return result; }
+    if (result && typeof result === 'object' && 'prompts' in (result as Record<string, unknown>)) {
+      return (result as Record<string, unknown>).prompts as unknown[];
+    }
+    return [];
+  }
+
   async createApiKey(name: string, scopes: string[], expiresIn: string): Promise<ApiKeyCreateResponse> {
     const resp = await this.httpPost('/api/v1/api-keys', { name, scopes, expiresIn });
     return resp as ApiKeyCreateResponse;

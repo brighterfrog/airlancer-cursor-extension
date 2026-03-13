@@ -2,7 +2,7 @@
   "name": "airlancer",
   "displayName": "Airlancer — AI Governance for Cursor & Antigravity",
   "description": "Connect Cursor, Antigravity, or VS Code to the Airlancer governance platform. Auto-configure MCP tools, sync team skills & rules, enforce cost budgets, and get policy-aware AI assistance.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "airlancer",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -95,6 +95,36 @@
         "title": "Create New API Key",
         "category": "Airlancer",
         "icon": "$(key)"
+      },
+      {
+        "command": "airlancer.syncPrompts",
+        "title": "Sync Prompts from Platform",
+        "category": "Airlancer",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "airlancer.browsePrompts",
+        "title": "Browse Prompt Templates",
+        "category": "Airlancer",
+        "icon": "$(file-text)"
+      },
+      {
+        "command": "airlancer.insertPrompt",
+        "title": "Insert Prompt at Cursor",
+        "category": "Airlancer",
+        "icon": "$(insert)"
+      },
+      {
+        "command": "airlancer.editPromptWithAI",
+        "title": "Edit Prompt with AI",
+        "category": "Airlancer",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "airlancer.generatePrompt",
+        "title": "Generate Prompt from Description",
+        "category": "Airlancer",
+        "icon": "$(sparkle)"
       }
     ],
     "configuration": {
@@ -141,6 +171,18 @@
           "default": "https://adlc-dev.airlancer.ai",
           "description": "Airlancer dashboard URL for browser links",
           "order": 7
+        },
+        "airlancer.syncPromptsOnConnect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically sync prompt templates when connected",
+          "order": 8
+        },
+        "airlancer.promptsSyncInterval": {
+          "type": "number",
+          "default": 300,
+          "description": "Prompt templates sync interval in seconds (0 to disable)",
+          "order": 9
         }
       }
     },
@@ -170,6 +212,11 @@
         {
           "id": "airlancer.rules",
           "name": "Rules"
+        },
+        {
+          "id": "airlancer.prompts",
+          "name": "Prompts",
+          "when": "airlancer.connected"
         }
       ]
     },
@@ -181,6 +228,26 @@
         },
         {
           "command": "airlancer.disconnect",
+          "when": "airlancer.connected"
+        },
+        {
+          "command": "airlancer.syncPrompts",
+          "when": "airlancer.connected"
+        },
+        {
+          "command": "airlancer.browsePrompts",
+          "when": "airlancer.connected"
+        },
+        {
+          "command": "airlancer.insertPrompt",
+          "when": "airlancer.connected"
+        },
+        {
+          "command": "airlancer.editPromptWithAI",
+          "when": "airlancer.connected"
+        },
+        {
+          "command": "airlancer.generatePrompt",
           "when": "airlancer.connected"
         }
       ]
