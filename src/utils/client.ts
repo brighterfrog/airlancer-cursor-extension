@@ -67,6 +67,8 @@ export class AirlancerClient {
   private serverUrl: string = '';
   private output: vscode.OutputChannel;
   private nextId: number = 1;
+  private tenantId?: string;
+  private userId?: string;
 
   constructor(output: vscode.OutputChannel) {
     this.output = output;
@@ -166,6 +168,19 @@ export class AirlancerClient {
     return resp as IDEConfig;
   }
 
+  async fetchMe(): Promise<{ tenantId: string; userId: string } | null> {
+    try {
+      const data = await this.httpGet('/api/v1/me') as Record<string, unknown>;
+      if (data?.tenantId) {
+        this.tenantId = data.tenantId as string;
+        this.userId = data.userId as string;
+      }
+      return data as { tenantId: string; userId: string };
+    } catch {
+      return null;
+    }
+  }
+
   // --- Internal HTTP ---
 
   private async mcpCall(method: string, params: unknown): Promise<Record<string, unknown>> {
@@ -221,11 +236,15 @@ export class AirlancerClient {
   }
 
   private async httpGet(path: string): Promise<unknown> {
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${this.apiKey}`,
+    };
+    if (this.tenantId) {
+      headers['X-Tenant-ID'] = this.tenantId;
+    }
     const resp = await fetch(`${this.serverUrl}${path}`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
-      },
+      headers,
       signal: AbortSignal.timeout(15000),
     });
 
@@ -238,12 +257,16 @@ export class AirlancerClient {
   }
 
   private async httpPost(path: string, body: unknown): Promise<unknown> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`,
+    };
+    if (this.tenantId) {
+      headers['X-Tenant-ID'] = this.tenantId;
+    }
     const resp = await fetch(`${this.serverUrl}${path}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
-      },
+      headers,
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(15000),
     });

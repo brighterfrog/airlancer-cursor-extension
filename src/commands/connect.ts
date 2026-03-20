@@ -40,8 +40,19 @@ export async function connectCommand(ctx: AirlancerContext, toolsProvider: Tools
     const tools = await ctx.client.listTools();
     ctx.outputChannel.appendLine(`Connected! Server v${status.serverVersion}, ${tools.length} tools available.`);
 
+    // Fetch tenant context from the MCP server.
+    let tenantId: string | undefined;
+    try {
+      const me = await ctx.client.fetchMe();
+      if (me?.tenantId) {
+        tenantId = me.tenantId;
+      }
+    } catch {
+      // Non-fatal — registration still works without X-Tenant-ID for Bearer auth.
+    }
+
     // Register MCP server with Cursor.
-    await ctx.mcpRegistrar.register(serverUrl, apiKey);
+    await ctx.mcpRegistrar.register(serverUrl, apiKey, tenantId);
 
     // Update state.
     ctx.connected = true;

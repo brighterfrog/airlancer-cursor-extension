@@ -79,7 +79,7 @@ export class McpRegistrar {
   /**
    * Register the Airlancer MCP server with the detected IDE.
    */
-  async register(serverUrl: string, apiKey: string): Promise<void> {
+  async register(serverUrl: string, apiKey: string, tenantId?: string): Promise<void> {
     const mcpUrl = `${serverUrl.replace(/\/+$/, '')}/mcp`;
     const ide = this.detectIde();
     this.output.appendLine(`Detected IDE: ${ide}`);
@@ -88,12 +88,15 @@ export class McpRegistrar {
       case 'cursor-api': {
         this.output.appendLine('Registering MCP server via Cursor API...');
         const cursor = (vscode as unknown as { cursor: CursorApi }).cursor;
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${apiKey}`,
+        };
+        if (tenantId) {
+          headers['X-Tenant-ID'] = tenantId;
+        }
         cursor.mcp.registerServer({
           name: SERVER_NAME,
-          server: {
-            url: mcpUrl,
-            headers: { Authorization: `Bearer ${apiKey}` },
-          },
+          server: { url: mcpUrl, headers },
         });
         this.registered = true;
         this.registeredVia = 'cursor-api';
@@ -103,7 +106,7 @@ export class McpRegistrar {
 
       case 'antigravity': {
         this.output.appendLine('Registering MCP server for Antigravity...');
-        await this.writeAntigravityConfig(mcpUrl, apiKey);
+        await this.writeAntigravityConfig(mcpUrl, apiKey, tenantId);
         this.registered = true;
         this.registeredVia = 'antigravity';
         break;
@@ -113,7 +116,7 @@ export class McpRegistrar {
       case 'vscode':
       default: {
         this.output.appendLine(`Registering MCP server via .cursor/mcp.json (${ide})...`);
-        await this.writeCursorMcpJson(mcpUrl, apiKey);
+        await this.writeCursorMcpJson(mcpUrl, apiKey, tenantId);
         this.registered = true;
         this.registeredVia = ide;
         break;
@@ -158,7 +161,7 @@ export class McpRegistrar {
 
   // --- Antigravity Config ---
 
-  private async writeAntigravityConfig(mcpUrl: string, apiKey: string): Promise<void> {
+  private async writeAntigravityConfig(mcpUrl: string, apiKey: string, tenantId?: string): Promise<void> {
     const configPath = this.antigravityConfigPath;
     const configDir = path.dirname(configPath);
 
@@ -174,12 +177,17 @@ export class McpRegistrar {
       // File doesn't exist or invalid — start fresh.
     }
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${apiKey}`,
+    };
+    if (tenantId) {
+      headers['X-Tenant-ID'] = tenantId;
+    }
+
     const servers = (config.mcpServers ?? {}) as Record<string, unknown>;
     servers['airlancer'] = {
       serverUrl: mcpUrl,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers,
     };
     config.mcpServers = servers;
 
@@ -208,7 +216,7 @@ export class McpRegistrar {
 
   // --- Cursor / VS Code File Fallback ---
 
-  private async writeCursorMcpJson(mcpUrl: string, apiKey: string): Promise<void> {
+  private async writeCursorMcpJson(mcpUrl: string, apiKey: string, tenantId?: string): Promise<void> {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders?.length) {
       this.output.appendLine('No workspace folder open — cannot write .cursor/mcp.json');
@@ -231,13 +239,18 @@ export class McpRegistrar {
       // File doesn't exist — start fresh.
     }
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${apiKey}`,
+    };
+    if (tenantId) {
+      headers['X-Tenant-ID'] = tenantId;
+    }
+
     const servers = (existing.mcpServers ?? {}) as Record<string, unknown>;
     servers['airlancer'] = {
       url: mcpUrl,
       type: 'streamableHttp',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers,
     };
 
     const newContent = JSON.stringify({ ...existing, mcpServers: servers }, null, 2) + '\n';
